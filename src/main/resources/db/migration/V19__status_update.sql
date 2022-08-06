@@ -1,0 +1,15 @@
+update status set name = 'Ticket Initiated' , description= 'Ticket Request Initiated from Shop' , status_tag= 'START' , default_name = 'Issue Initiated' where id=1 ;
+update status set name = 'Solved Over Phone' , description= 'Ticket Solved over Phone by MSO' , status_tag= 'PRE_END' , default_name = 'In-Progress' where id=2 ;
+update status set name = 'Shop Visit Plan' , description= 'Shop Visit Plan Created by MSO' , status_tag= 'COMMON' , default_name = 'In-Progress' where id=3 ;
+update status set name = 'Pending for Spare Part' , description= 'Pending for Spare Part at Shop' , status_tag= 'COMMON' , default_name = 'In-Progress' where id=4 ;
+update status set name = 'Regular Service at Shop' , description= 'Regular Service at Shop' , status_tag= 'PRE_END' , default_name = 'In-Progress' where id=5 ;
+update status set name = 'Parts Repaired at Shop' , description= 'Parts Repaired at Shop' , status_tag= 'PRE_END' , default_name = 'In-Progress' where id=6 ;
+update status set name = 'Parts Replaced at Shop' , description= 'Parts Replaced at Shop' , status_tag= 'PRE_END' , default_name = 'In-Progress' where id=7 ;
+update status set name = 'Withdrawn for Inspection' , description= 'Withdrawn for Inspection' , status_tag= 'COMMON' , default_name = 'In-Progress' where id=8 ;
+update status set name = 'Parts Repaired at Workshop' , description= 'Parts Repaired at Workshop' , status_tag= 'PRE_END' , default_name = 'In-Progress' where id=9 ;
+update status set name = 'Parts Replaced at Workshop' , description= 'Parts Replaced at Workshop' , status_tag= 'PRE_END' , default_name = 'In-Progress' where id=10 ;
+update status set name = 'Replacement Requested' , description= 'Replacement Requested' , status_tag= 'COMMON' , default_name = 'In-Progress' where id=11 ;
+update status set name = 'Ticket Closed' , description= 'Ticket Closed' , status_tag= 'END' , default_name = 'Ticket Closed' where id=12 ;
+update status set name = 'Ticket Re-Opened' , description= 'Ticket Re-Opened' , status_tag= 'COMMON' , default_name = 'In-Progress' where id=13 ;
+update status set name = 'Withdrawn for Replacement' , description= 'Withdrawn for Replacement' , status_tag= 'COMMON' , default_name = 'In-Progress' where id=14 ;
+update status set name = 'Installed Replaced Machine' , description= 'Installed Replaced Machine' , status_tag= 'PRE_END' , default_name = 'In-Progress' where id=15 ;

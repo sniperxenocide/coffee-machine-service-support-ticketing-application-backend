@@ -1,0 +1,1 @@
+insert into role_status(role_id, status_id) VALUE (3,12);

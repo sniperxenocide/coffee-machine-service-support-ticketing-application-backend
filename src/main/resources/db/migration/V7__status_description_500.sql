@@ -1,0 +1,5 @@
+ALTER TABLE status
+    MODIFY `description` VARCHAR(500);
+
+ALTER TABLE status
+    MODIFY name VARCHAR(255) NOT NULL;

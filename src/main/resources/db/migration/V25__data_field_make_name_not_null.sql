@@ -1,0 +1,2 @@
+ALTER TABLE data_field
+    MODIFY name VARCHAR(255) NOT NULL;

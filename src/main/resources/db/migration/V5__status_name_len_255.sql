@@ -1,0 +1,2 @@
+ALTER TABLE status
+    MODIFY name VARCHAR(255);

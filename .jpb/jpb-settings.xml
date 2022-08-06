@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="JpaLiquibaseChangesConfig">
+    <exclude-change idName="contract" tagName="createTable" />
+    <exclude-change idName="machine" tagName="createTable" />
+    <exclude-change idName="machine_brand" tagName="createTable" />
+    <exclude-change idName="responsible_officer" tagName="createTable" />
+    <exclude-change idName="shop" tagName="createTable" />
+    <exclude-change idName="FK_CONTRACT_ON_MACHINE" tagName="addForeignKeyConstraint" />
+    <exclude-change idName="FK_CONTRACT_ON_SHOP" tagName="addForeignKeyConstraint" />
+    <exclude-change idName="FK_MACHINE_ON_BRAND" tagName="addForeignKeyConstraint" />
+    <exclude-change idName="FK_SHOP_ON_RESPONSIBLE_OFFICER" tagName="addForeignKeyConstraint" />
+    <exclude-change idName="status#status_tag" tagName="dropColumn" />
+    <exclude-change idName="status#status_tag" tagName="addColumn" />
+    <exclude-change idName="status#status_tag" tagName="addDefaultValue" />
+    <exclude-change idName="data_field#type" tagName="dropColumn" />
+    <exclude-change idName="data_field#type" tagName="addColumn" />
+    <exclude-change idName="data_field#type" tagName="addDefaultValue" />
+    <exclude-change idName="status_wise_data#field_data3" tagName="addColumn" />
+  </component>
+</project>

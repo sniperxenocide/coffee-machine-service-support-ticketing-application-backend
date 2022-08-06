@@ -1,0 +1,5 @@
+ALTER TABLE status
+    ADD status_tag ENUM ('START', 'END', 'PRE_END', 'COMMON') DEFAULT 'COMMON' NULL;
+
+ALTER TABLE status
+    MODIFY status_tag ENUM ('START', 'END', 'PRE_END', 'COMMON') NOT NULL;
