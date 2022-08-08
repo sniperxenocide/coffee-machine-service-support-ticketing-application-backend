@@ -13,6 +13,9 @@ import com.cgd.cvm_technical_support.repository.master.ReShop;
 import com.cgd.cvm_technical_support.repository.primary.*;
 import com.cgd.cvm_technical_support.tmp.*;
 import org.slf4j.Logger;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
@@ -32,7 +35,10 @@ public class SeIssue {
     private final ReStatusTrack reStatusTrack;
     private final ReStatusWiseData reStatusWiseData;
     private final ReResponsibleOfficer reResponsibleOfficer;
-    public final Logger logger = CgdCvmTechnicalSupport.LOGGER;
+    private final Logger logger = CgdCvmTechnicalSupport.LOGGER;
+
+    private final ArrayList<String> sortDirections = new ArrayList<>(Arrays.asList("desc","asc"));
+    private final ArrayList<String> sortByColumns = new ArrayList<>(Arrays.asList("id"));
 
     public SeIssue(SeCommon seCommon, ReShop reShop, ReRole reRole, ReMachine reMachine, ReStatus reStatus, ReDataField reDataField, ReIssueHeader reIssueHeader, ReIssueType reIssueType, ReStatusTrack reStatusTrack, ReStatusWiseData reStatusWiseData, ReResponsibleOfficer reResponsibleOfficer) {
         this.seCommon = seCommon;
@@ -49,14 +55,29 @@ public class SeIssue {
     }
 
     // This is for Monitoring Web Portal
-    public Response getAllIssues(HttpServletRequest request){
+    public Response getAllIssues(HttpServletRequest request,int page,String sortBy,
+                                 String sortDir, String shopCode,String machineNumber,
+                                 String msoPhone,String ticketNumber){
+        int pageSize=10;
+        int recordCount = reIssueHeader.countAllByFilter(shopCode,machineNumber,msoPhone,ticketNumber);
+        int totalPages = recordCount%pageSize ==0 ? recordCount/pageSize : recordCount/pageSize+1 ;
+        int pageIndex = page<1 || page>totalPages ? 1 : page ;
+        String by = sortByColumns.contains(sortBy)?sortBy:sortByColumns.get(0);
+        String dir = sortDirections.contains(sortDir)?sortDir:sortDirections.get(0);
+        Pageable pageable = PageRequest.of( pageIndex-1 , pageSize,
+                Sort.by(Sort.Direction.fromString(dir), by));
         try {
             User user = seCommon.getUser(request);
             if(user==null) throw new Exception("Unauthorized User");
             ArrayList<IssueDetail> issueDetailList = new ArrayList<>();
-            for (IssueHeader ih:reIssueHeader.findAll())
+            for (IssueHeader ih:reIssueHeader.getAllByFilter(shopCode,machineNumber,msoPhone,ticketNumber,pageable))
                 issueDetailList.add(getIssueDetailObject(ih,user));
-            return new Response(true,"Success",issueDetailList);
+            HashMap<String, Object> data = new HashMap<>();
+            data.put("tickets",issueDetailList);
+            data.put("pageIndex",pageIndex);
+            data.put("totalPages",totalPages);
+            data.put("pageSize",pageSize);
+            return new Response(true,"Success",data);
         }catch (Exception e){
             logger.info(e.getMessage());
             return new Response(false,e.getMessage());
@@ -177,8 +198,7 @@ public class SeIssue {
                 issueHeader.getMachineNumber(),issueHeader.getMachineModel(), issueHeader.getMachineBrand(),
                 mso.getName(),mso.getPhone(), issueHeader.getCreationTime(),issueHeader.getCurrentStatus(),
                 reStatus.getNextStatusForCurrentStatusAndUser(issueHeader.getCurrentStatus().getId(),
-                        user.getId()),
-                null);
+                        user.getId()));
         List<IssueHistory> issueHistory = new ArrayList<>();
         int seq=1;
         for(StatusTrack track:issueHeader.getStatusTracks()){

@@ -15,9 +15,15 @@ public class CnIssue {
 
     //for monitoring web portal
     @GetMapping("/api/v1/issue/all")
-    public ResponseEntity<Object> getAllIssues(HttpServletRequest request){
-        return ResponseEntity.ok(service.getAllIssues(request));
-    }
+    public ResponseEntity<Object> getAllIssues(HttpServletRequest request,
+                  @RequestParam(required = false,defaultValue = "1") int page,
+                  @RequestParam(required = false,defaultValue = "id") String sortBy,
+                  @RequestParam(required = false,defaultValue = "desc") String sortDir,
+                  @RequestParam(required = false,defaultValue = "%") String shopCode,
+                  @RequestParam(required = false,defaultValue = "%") String machineNumber,
+                  @RequestParam(required = false,defaultValue = "%") String msoPhone,
+                  @RequestParam(required = false,defaultValue = "%") String ticketNumber
+    ) {return ResponseEntity.ok(service.getAllIssues(request,page,sortBy,sortDir,shopCode,machineNumber,msoPhone,ticketNumber));}
 
     @PostMapping("/api/v1/issue/create")
     public ResponseEntity<Object> createIssue(

@@ -1,6 +1,7 @@
 package com.cgd.cvm_technical_support.repository.primary;
 
 import com.cgd.cvm_technical_support.model.primary.IssueHeader;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -11,6 +12,23 @@ import java.util.List;
 
 @Repository
 public interface ReIssueHeader extends JpaRepository<IssueHeader, Long> {
+
+    @Query(value = "select i from IssueHeader i where " +
+            "i.shopUser.username like concat('%',?1,'%') and " +
+            "i.machineNumber like concat('%',?2,'%') and " +
+            "i.msoPhone like concat('%',?3,'%') and " +
+            "i.requestToken like concat('%',?4,'%') ")
+    List<IssueHeader> getAllByFilter(String shopCode,String machineNumber,
+                                     String msoPhone,String ticketNumber,
+                                     Pageable pageable);
+
+    @Query(value = "select count(i) from IssueHeader i where " +
+            "i.shopUser.username like concat('%',?1,'%') and " +
+            "i.machineNumber like concat('%',?2,'%') and " +
+            "i.msoPhone like concat('%',?3,'%') and " +
+            "i.requestToken like concat('%',?4,'%') ")
+    int countAllByFilter(String shopCode,String machineNumber,
+                         String msoPhone,String ticketNumber);
 
     int countByRequestTokenLike(String requestToken);
 
