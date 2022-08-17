@@ -37,4 +37,7 @@ public class Status {
     @Column(name = "status_tag", nullable = false,columnDefinition = " enum('START','END','PRE_END','COMMON') default 'COMMON' ")
     private StatusTag statusTag;
 
+    @Column(name = "tag_description",length = 500)
+    private String tagDescription;
+
 }

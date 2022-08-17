@@ -1,19 +1,22 @@
 package com.cgd.cvm_technical_support.tmp;
 
 import com.cgd.cvm_technical_support.model.primary.StatusWiseData;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.NonNull;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Data @NoArgsConstructor @AllArgsConstructor
+@Data @NoArgsConstructor @AllArgsConstructor @RequiredArgsConstructor
 public class IssueHistory {
-    private int sequence;
-    private String status;
-    private String msoPhone;
-    private LocalDateTime creationTime;
-    private List<StatusWiseData> statusData;
+    @NonNull private int sequence;    //Used in Mobile App
+    @NonNull private String status;    //Used in Mobile App
+    @NonNull private String msoName;
+    @NonNull private String msoPhone;    //Used in Mobile App
+    @NonNull private LocalDateTime creationTime;    //Used in Mobile App
+    @NonNull private List<StatusWiseData> statusData;    //Used in Mobile App
+
+    @NonNull private String createdByUsername;
+    private String createdByName;
+    private String createdByPhone;
+    private String createdByType;
 }

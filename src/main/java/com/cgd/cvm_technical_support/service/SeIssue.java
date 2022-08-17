@@ -57,9 +57,9 @@ public class SeIssue {
     // This is for Monitoring Web Portal
     public Response getAllIssues(HttpServletRequest request,int page,String sortBy,
                                  String sortDir, String shopCode,String machineNumber,
-                                 String msoPhone,String ticketNumber){
+                                 String msoPhone,String ticketNumber,String statusId,String statusTag){
         int pageSize=10;
-        int recordCount = reIssueHeader.countAllByFilter(shopCode,machineNumber,msoPhone,ticketNumber);
+        int recordCount = reIssueHeader.countAllByFilter(shopCode,machineNumber,msoPhone,ticketNumber,statusId,statusTag);
         int totalPages = recordCount%pageSize ==0 ? recordCount/pageSize : recordCount/pageSize+1 ;
         int pageIndex = page<1 || page>totalPages ? 1 : page ;
         String by = sortByColumns.contains(sortBy)?sortBy:sortByColumns.get(0);
@@ -70,13 +70,16 @@ public class SeIssue {
             User user = seCommon.getUser(request);
             if(user==null) throw new Exception("Unauthorized User");
             ArrayList<IssueDetail> issueDetailList = new ArrayList<>();
-            for (IssueHeader ih:reIssueHeader.getAllByFilter(shopCode,machineNumber,msoPhone,ticketNumber,pageable))
+            for (IssueHeader ih:reIssueHeader.getAllByFilter(shopCode,machineNumber,msoPhone,ticketNumber,statusId,statusTag,pageable))
                 issueDetailList.add(getIssueDetailObject(ih,user));
             HashMap<String, Object> data = new HashMap<>();
             data.put("tickets",issueDetailList);
             data.put("pageIndex",pageIndex);
             data.put("totalPages",totalPages);
             data.put("pageSize",pageSize);
+            data.put("recordCount",recordCount);
+            data.put("statusList",reStatus.getStatusByTag(statusTag));
+            data.put("statusTagList",reStatus.getAllStatusTags());
             return new Response(true,"Success",data);
         }catch (Exception e){
             logger.info(e.getMessage());
@@ -193,19 +196,37 @@ public class SeIssue {
         if(mso==null) mso = new ResponsibleOfficer();
         IssueDetail issueDetail = new IssueDetail(
                 issueHeader.getId(), issueHeader.getRequestToken(), issueHeader.getIssueType().getName(),
-                issueHeader.getShopName(),issueHeader.getShopOwnerPhone(), issueHeader.getShopUser().getUsername(),
+                issueHeader.getShopName(), shop.getProprietorName(), issueHeader.getShopOwnerPhone(), issueHeader.getShopUser().getUsername(),
                 issueHeader.getShopAddress(), shop.getDivision(), shop.getRegion(), shop.getTerritory(),
                 issueHeader.getMachineNumber(),issueHeader.getMachineModel(), issueHeader.getMachineBrand(),
                 mso.getName(),mso.getPhone(), issueHeader.getCreationTime(),issueHeader.getCurrentStatus(),
                 reStatus.getNextStatusForCurrentStatusAndUser(issueHeader.getCurrentStatus().getId(),
                         user.getId()));
-        List<IssueHistory> issueHistory = new ArrayList<>();
+        List<IssueHistory> issueHistoryList = new ArrayList<>();
         int seq=1;
         for(StatusTrack track:issueHeader.getStatusTracks()){
-            issueHistory.add(new IssueHistory(seq++,track.getStatus().getName(),
-                    track.getMsoPhone(), track.getCreationTime(), track.getStatusWiseData()));
+            ResponsibleOfficer statusTrackMso = reResponsibleOfficer.findById(track.getMsoUser().getRemoteId()).orElse(null);
+            if(statusTrackMso==null) statusTrackMso = new ResponsibleOfficer();
+            IssueHistory issueHistory = new IssueHistory(seq++,track.getStatus().getName(), statusTrackMso.getName(),
+                    track.getMsoPhone(), track.getCreationTime(), track.getStatusWiseData(),
+                    track.getCreatedByUser().getUsername());
+            if(track.getCreatedByUser().getRemoteTable().equalsIgnoreCase("shop")){
+                Shop s = reShop.findById(track.getCreatedByUser().getRemoteId()).orElse(null);
+                if(s==null) s = new Shop();
+                issueHistory.setCreatedByName(s.getShopName());
+                issueHistory.setCreatedByPhone(s.getProprietorPhone());
+                issueHistory.setCreatedByType("Shop Owner");
+            }
+            else if(track.getCreatedByUser().getRemoteTable().equalsIgnoreCase("responsible_officer")){
+                ResponsibleOfficer m = reResponsibleOfficer.findById(track.getCreatedByUser().getRemoteId()).orElse(null);
+                if(m==null) m = new ResponsibleOfficer();
+                issueHistory.setCreatedByName(m.getName());
+                issueHistory.setCreatedByPhone(m.getPhone());
+                issueHistory.setCreatedByType("MSO");
+            }
+            issueHistoryList.add(issueHistory);
         }
-        issueDetail.setIssueHistory(issueHistory);
+        issueDetail.setIssueHistory(issueHistoryList);
         return issueDetail;
     }
 

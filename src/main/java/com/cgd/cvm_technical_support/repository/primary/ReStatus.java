@@ -1,6 +1,7 @@
 package com.cgd.cvm_technical_support.repository.primary;
 
 import com.cgd.cvm_technical_support.model.primary.Status;
+import com.cgd.cvm_technical_support.tmp.StatusTagGroup;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -29,5 +30,14 @@ public interface ReStatus extends JpaRepository<Status, Long> {
     @Query(value = "select s from Status s where " +
             "s.statusTag=com.cgd.cvm_technical_support.enums.StatusTag.END ")
     Optional<Status> getEndStatus();
+
+    @Query(value = "select * from status where status_tag like ?1 ",
+    nativeQuery = true)
+    List<Status> getStatusByTag(String statusTag);
+
+    @Query(value = "select distinct " +
+            "new com.cgd.cvm_technical_support.tmp.StatusTagGroup(s.statusTag,s.tagDescription)" +
+            " from Status s ")
+    List<StatusTagGroup> getAllStatusTags();
 
 }

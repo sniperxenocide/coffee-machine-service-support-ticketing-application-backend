@@ -17,18 +17,22 @@ public interface ReIssueHeader extends JpaRepository<IssueHeader, Long> {
             "i.shopUser.username like concat('%',?1,'%') and " +
             "i.machineNumber like concat('%',?2,'%') and " +
             "i.msoPhone like concat('%',?3,'%') and " +
-            "i.requestToken like concat('%',?4,'%') ")
+            "i.requestToken like concat('%',?4,'%') and " +
+            "concat(i.currentStatus.id,'') like ?5 and " +
+            "concat(i.currentStatus.statusTag,'') like ?6 " )
     List<IssueHeader> getAllByFilter(String shopCode,String machineNumber,
-                                     String msoPhone,String ticketNumber,
-                                     Pageable pageable);
+                                     String msoPhone,String ticketNumber,String statusId,
+                                     String statusTag, Pageable pageable);
 
     @Query(value = "select count(i) from IssueHeader i where " +
             "i.shopUser.username like concat('%',?1,'%') and " +
             "i.machineNumber like concat('%',?2,'%') and " +
             "i.msoPhone like concat('%',?3,'%') and " +
-            "i.requestToken like concat('%',?4,'%') ")
+            "i.requestToken like concat('%',?4,'%') and " +
+            "concat(i.currentStatus.id,'') like ?5 and " +
+            "concat(i.currentStatus.statusTag,'') like ?6 ")
     int countAllByFilter(String shopCode,String machineNumber,
-                         String msoPhone,String ticketNumber);
+                         String msoPhone,String ticketNumber,String statusId,String statusTag);
 
     int countByRequestTokenLike(String requestToken);
 

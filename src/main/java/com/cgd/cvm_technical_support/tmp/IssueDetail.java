@@ -12,6 +12,7 @@ public class IssueDetail {
     @NonNull private String issueToken;    // Being Used in Mobile App
     @NonNull private String issueType;    // Being Used in Mobile App
     @NonNull private String shopName;    // Being Used in Mobile App
+    @NonNull private String shopOwner;
     @NonNull private String shopPhone;    // Being Used in Mobile App
     @NonNull private String shopMisCode;    // Being Used in Mobile App
     @NonNull private String shopAddress;    // Being Used in Mobile App

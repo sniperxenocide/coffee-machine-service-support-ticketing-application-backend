@@ -22,8 +22,10 @@ public class CnIssue {
                   @RequestParam(required = false,defaultValue = "%") String shopCode,
                   @RequestParam(required = false,defaultValue = "%") String machineNumber,
                   @RequestParam(required = false,defaultValue = "%") String msoPhone,
-                  @RequestParam(required = false,defaultValue = "%") String ticketNumber
-    ) {return ResponseEntity.ok(service.getAllIssues(request,page,sortBy,sortDir,shopCode,machineNumber,msoPhone,ticketNumber));}
+                  @RequestParam(required = false,defaultValue = "%") String ticketNumber,
+                  @RequestParam(required = false,defaultValue = "%") String statusId,
+                  @RequestParam(required = false,defaultValue = "%") String statusTag
+    ) {return ResponseEntity.ok(service.getAllIssues(request,page,sortBy,sortDir,shopCode,machineNumber,msoPhone,ticketNumber,statusId,statusTag));}
 
     @PostMapping("/api/v1/issue/create")
     public ResponseEntity<Object> createIssue(
