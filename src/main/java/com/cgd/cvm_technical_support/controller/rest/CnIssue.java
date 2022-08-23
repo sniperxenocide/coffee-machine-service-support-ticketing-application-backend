@@ -27,6 +27,11 @@ public class CnIssue {
                   @RequestParam(required = false,defaultValue = "%") String statusTag
     ) {return ResponseEntity.ok(service.getAllIssues(request,page,sortBy,sortDir,shopCode,machineNumber,msoPhone,ticketNumber,statusId,statusTag));}
 
+    @GetMapping("/api/v1/web/dashboard")
+    public ResponseEntity<Object> getWebDashboardAnalytics(){
+        return ResponseEntity.ok(service.getWebDashboardAnalytics());
+    }
+
     @PostMapping("/api/v1/issue/create")
     public ResponseEntity<Object> createIssue(
             HttpServletRequest request,

@@ -40,4 +40,7 @@ public class Status {
     @Column(name = "tag_description",length = 500)
     private String tagDescription;
 
+    @Column(name = "status_order")
+    private Long statusOrder;
+
 }

@@ -32,4 +32,8 @@ public class IssueDetail {
     private LocalDateTime responseTime;
     private LocalDateTime resolutionTime;
     private LocalDateTime closingTime;
+
+    private Long creationToResponseTimeMin;
+    private Long responseToResolutionTimeMin;
+    private Long resolutionToClosingTimeMin;
 }

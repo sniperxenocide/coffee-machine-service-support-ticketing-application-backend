@@ -7,7 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter @Setter @AllArgsConstructor @NoArgsConstructor
-public class StatusTagGroup {
+public class StatusTagWiseSummary {
     private StatusTag statusTag;
     private String tagDescription;
+    private long ticketCount;
 }

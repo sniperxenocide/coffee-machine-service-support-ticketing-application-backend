@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Service
@@ -37,8 +39,8 @@ public class SeIssue {
     private final ReResponsibleOfficer reResponsibleOfficer;
     private final Logger logger = CgdCvmTechnicalSupport.LOGGER;
 
-    private final ArrayList<String> sortDirections = new ArrayList<>(Arrays.asList("desc","asc"));
-    private final ArrayList<String> sortByColumns = new ArrayList<>(Arrays.asList("id"));
+    private final ArrayList<String> sortDirections = new ArrayList<>(Arrays.asList("asc","desc"));
+    private final ArrayList<String> sortByColumns = new ArrayList<>(Arrays.asList("currentStatus.statusOrder","lastUpdateTime"));
 
     public SeIssue(SeCommon seCommon, ReShop reShop, ReRole reRole, ReMachine reMachine, ReStatus reStatus, ReDataField reDataField, ReIssueHeader reIssueHeader, ReIssueType reIssueType, ReStatusTrack reStatusTrack, ReStatusWiseData reStatusWiseData, ReResponsibleOfficer reResponsibleOfficer) {
         this.seCommon = seCommon;
@@ -62,10 +64,11 @@ public class SeIssue {
         int recordCount = reIssueHeader.countAllByFilter(shopCode,machineNumber,msoPhone,ticketNumber,statusId,statusTag);
         int totalPages = recordCount%pageSize ==0 ? recordCount/pageSize : recordCount/pageSize+1 ;
         int pageIndex = page<1 || page>totalPages ? 1 : page ;
-        String by = sortByColumns.contains(sortBy)?sortBy:sortByColumns.get(0);
-        String dir = sortDirections.contains(sortDir)?sortDir:sortDirections.get(0);
+//        String by = sortByColumns.contains(sortBy)?sortBy:sortByColumns.get(0);
+//        String dir = sortDirections.contains(sortDir)?sortDir:sortDirections.get(0);
         Pageable pageable = PageRequest.of( pageIndex-1 , pageSize,
-                Sort.by(Sort.Direction.fromString(dir), by));
+                Sort.by(Sort.Direction.fromString(sortDirections.get(0)),
+                        sortByColumns.get(0),sortByColumns.get(1)));
         try {
             User user = seCommon.getUser(request);
             if(user==null) throw new Exception("Unauthorized User");
@@ -78,13 +81,21 @@ public class SeIssue {
             data.put("totalPages",totalPages);
             data.put("pageSize",pageSize);
             data.put("recordCount",recordCount);
-            data.put("statusList",reStatus.getStatusByTag(statusTag));
-            data.put("statusTagList",reStatus.getAllStatusTags());
+            data.put("statusList",reStatus.getStatusWiseTicketSummary(statusTag));
+            data.put("statusTagList",reStatus.getStatusTagWiseTicketSummary());
             return new Response(true,"Success",data);
         }catch (Exception e){
+            e.printStackTrace();
             logger.info(e.getMessage());
             return new Response(false,e.getMessage());
         }
+    }
+
+    public Response getWebDashboardAnalytics(){
+        HashMap<String, Object> data = new HashMap<>();
+        data.put("statusList",reStatus.getStatusWiseTicketSummary("%"));
+        data.put("statusTagList",reStatus.getStatusTagWiseTicketSummary());
+        return new Response(true,"Success",data);
     }
 
     public Response createNewIssue(HttpServletRequest request,String shopCode,Long machineId,Long issueTypeId){
@@ -189,6 +200,13 @@ public class SeIssue {
         }
     }
 
+    Long getTimeDiff(LocalDateTime start,LocalDateTime end){
+        LocalDateTime s=start,e=end;
+        if(s==null) return null;
+        if(e==null) e=LocalDateTime.now();
+        return s.until(e, ChronoUnit.MINUTES);
+    }
+
     public IssueDetail getIssueDetailObject(IssueHeader issueHeader,User user){
         Shop shop = reShop.findById(issueHeader.getShopUser().getRemoteId()).orElse(null);
         if(shop==null) shop = new Shop();
@@ -201,32 +219,43 @@ public class SeIssue {
                 issueHeader.getMachineNumber(),issueHeader.getMachineModel(), issueHeader.getMachineBrand(),
                 mso.getName(),mso.getPhone(), issueHeader.getCreationTime(),issueHeader.getCurrentStatus(),
                 reStatus.getNextStatusForCurrentStatusAndUser(issueHeader.getCurrentStatus().getId(),
-                        user.getId()));
+                        user.getId()),null,issueHeader.getResponseTime(),issueHeader.getResolutionTime(),
+                issueHeader.getClosingTime(),null,null,null);
         List<IssueHistory> issueHistoryList = new ArrayList<>();
         int seq=1;
         for(StatusTrack track:issueHeader.getStatusTracks()){
-            ResponsibleOfficer statusTrackMso = reResponsibleOfficer.findById(track.getMsoUser().getRemoteId()).orElse(null);
-            if(statusTrackMso==null) statusTrackMso = new ResponsibleOfficer();
-            IssueHistory issueHistory = new IssueHistory(seq++,track.getStatus().getName(), statusTrackMso.getName(),
-                    track.getMsoPhone(), track.getCreationTime(), track.getStatusWiseData(),
-                    track.getCreatedByUser().getUsername());
-            if(track.getCreatedByUser().getRemoteTable().equalsIgnoreCase("shop")){
-                Shop s = reShop.findById(track.getCreatedByUser().getRemoteId()).orElse(null);
-                if(s==null) s = new Shop();
-                issueHistory.setCreatedByName(s.getShopName());
-                issueHistory.setCreatedByPhone(s.getProprietorPhone());
-                issueHistory.setCreatedByType("Shop Owner");
-            }
-            else if(track.getCreatedByUser().getRemoteTable().equalsIgnoreCase("responsible_officer")){
-                ResponsibleOfficer m = reResponsibleOfficer.findById(track.getCreatedByUser().getRemoteId()).orElse(null);
-                if(m==null) m = new ResponsibleOfficer();
-                issueHistory.setCreatedByName(m.getName());
-                issueHistory.setCreatedByPhone(m.getPhone());
-                issueHistory.setCreatedByType("MSO");
-            }
-            issueHistoryList.add(issueHistory);
+            try {
+                ResponsibleOfficer statusTrackMso = reResponsibleOfficer.findById(track.getMsoUser().getRemoteId()).orElse(null);
+                if(statusTrackMso==null) statusTrackMso = new ResponsibleOfficer();
+                IssueHistory issueHistory = new IssueHistory(seq++,track.getStatus().getName(), statusTrackMso.getName(),
+                        track.getMsoPhone(), track.getCreationTime(), track.getStatusWiseData(),
+                        track.getCreatedByUser().getUsername());
+
+                if(track.getCreatedByUser().getRemoteTable()==null || track.getCreatedByUser().getRemoteTable().isEmpty()){
+                    issueHistory.setCreatedByType("Monitoring Officer");
+                }
+                else if(track.getCreatedByUser().getRemoteTable().equalsIgnoreCase("shop")){
+                    Shop s = reShop.findById(track.getCreatedByUser().getRemoteId()).orElse(null);
+                    if(s==null) s = new Shop();
+                    issueHistory.setCreatedByName(s.getShopName());
+                    issueHistory.setCreatedByPhone(s.getProprietorPhone());
+                    issueHistory.setCreatedByType("Shop Owner");
+                }
+                else if(track.getCreatedByUser().getRemoteTable().equalsIgnoreCase("responsible_officer")){
+                    ResponsibleOfficer m = reResponsibleOfficer.findById(track.getCreatedByUser().getRemoteId()).orElse(null);
+                    if(m==null) m = new ResponsibleOfficer();
+                    issueHistory.setCreatedByName(m.getName());
+                    issueHistory.setCreatedByPhone(m.getPhone());
+                    issueHistory.setCreatedByType("MSO");
+                }
+                issueHistoryList.add(issueHistory);
+            }catch (Exception e){e.printStackTrace();}
         }
         issueDetail.setIssueHistory(issueHistoryList);
+
+        issueDetail.setCreationToResponseTimeMin(getTimeDiff(issueDetail.getIssueDate(),issueDetail.getResponseTime()));
+        issueDetail.setResponseToResolutionTimeMin(getTimeDiff(issueDetail.getResponseTime(),issueDetail.getResolutionTime()));
+        issueDetail.setResolutionToClosingTimeMin(getTimeDiff(issueDetail.getResolutionTime(),issueDetail.getClosingTime()));
         return issueDetail;
     }
 
@@ -284,6 +313,21 @@ public class SeIssue {
                 reStatusWiseData.save(swd);
             }
 
+            //setting response,resolution,closing time
+            try {
+                if(statusTrack.getIssueHeader().getStatusTracks().size()==2){
+                    issueHeader.setResponseTime(LocalDateTime.now());
+                }
+                if(statusTrack.getStatus().getStatusTag().equals(StatusTag.PRE_END)){
+                    issueHeader.setResolutionTime(LocalDateTime.now());
+                }
+                if(statusTrack.getStatus().getStatusTag().equals(StatusTag.END)){
+                    issueHeader.setClosingTime(LocalDateTime.now());
+                }
+                reIssueHeader.save(issueHeader);
+            }catch (Exception e){e.printStackTrace();}
+            //setting response,resolution,closing time
+
         }catch (Exception e){
             logger.info(e.getMessage());
             return new Response(false,e.getMessage());
@@ -301,6 +345,7 @@ public class SeIssue {
             Status endStatus = reStatus.getEndStatus().orElse(null);
             if(endStatus==null) throw new Exception("End Status Not Found");
             issueHeader.setCurrentStatus(endStatus);
+            issueHeader.setClosingTime(LocalDateTime.now());
 
             StatusTrack statusTrack = new StatusTrack(issueHeader,endStatus,issueHeader.getCurrentMsoUser(),
                     issueHeader.getCurrentMsoPhone() ,issueHeader.getCurrentMsoLocation(), user);

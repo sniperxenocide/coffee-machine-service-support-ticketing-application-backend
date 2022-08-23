@@ -94,6 +94,15 @@ public class IssueHeader {
     @Column(name = "machine_brand", length = 100)
     private String machineBrand;
 
+    @Column(name = "response_time")
+    private LocalDateTime responseTime;
+
+    @Column(name = "resolution_time")
+    private LocalDateTime resolutionTime;
+
+    @Column(name = "closing_time")
+    private LocalDateTime closingTime;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "issue_type_id",nullable = false)
     private IssueType issueType;
