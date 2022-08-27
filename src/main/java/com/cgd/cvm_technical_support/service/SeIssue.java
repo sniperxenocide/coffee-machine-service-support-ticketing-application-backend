@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import javax.servlet.http.HttpServletRequest;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -40,7 +41,7 @@ public class SeIssue {
     private final Logger logger = CgdCvmTechnicalSupport.LOGGER;
 
     private final ArrayList<String> sortDirections = new ArrayList<>(Arrays.asList("asc","desc"));
-    private final ArrayList<String> sortByColumns = new ArrayList<>(Arrays.asList("currentStatus.statusOrder","lastUpdateTime"));
+    private final ArrayList<String> sortByColumns = new ArrayList<>(Arrays.asList("currentStatus.statusOrder","lastUpdateTime","creationToResolutionTimeMin","creationToClosingTimeMin"));
 
     public SeIssue(SeCommon seCommon, ReShop reShop, ReRole reRole, ReMachine reMachine, ReStatus reStatus, ReDataField reDataField, ReIssueHeader reIssueHeader, ReIssueType reIssueType, ReStatusTrack reStatusTrack, ReStatusWiseData reStatusWiseData, ReResponsibleOfficer reResponsibleOfficer) {
         this.seCommon = seCommon;
@@ -59,36 +60,61 @@ public class SeIssue {
     // This is for Monitoring Web Portal
     public Response getAllIssues(HttpServletRequest request,int page,String sortBy,
                                  String sortDir, String shopCode,String machineNumber,
-                                 String msoPhone,String ticketNumber,String statusId,String statusTag){
-        int pageSize=10;
-        int recordCount = reIssueHeader.countAllByFilter(shopCode,machineNumber,msoPhone,ticketNumber,statusId,statusTag);
-        int totalPages = recordCount%pageSize ==0 ? recordCount/pageSize : recordCount/pageSize+1 ;
-        int pageIndex = page<1 || page>totalPages ? 1 : page ;
-//        String by = sortByColumns.contains(sortBy)?sortBy:sortByColumns.get(0);
-//        String dir = sortDirections.contains(sortDir)?sortDir:sortDirections.get(0);
-        Pageable pageable = PageRequest.of( pageIndex-1 , pageSize,
-                Sort.by(Sort.Direction.fromString(sortDirections.get(0)),
-                        sortByColumns.get(0),sortByColumns.get(1)));
+                                 String msoPhone,String ticketNumber,String statusId,
+                                 String statusTag,String startDate,String endDate,
+                                 Long creationToResolveMinStart,Long creationToResolveMinEnd,
+                                 String creationToResolveWithNull,
+                                 Long creationToClosingMinStart,Long creationToClosingMinEnd,
+                                 String creationToClosingWithNull){
         try {
-            User user = seCommon.getUser(request);
-            if(user==null) throw new Exception("Unauthorized User");
-            ArrayList<IssueDetail> issueDetailList = new ArrayList<>();
-            for (IssueHeader ih:reIssueHeader.getAllByFilter(shopCode,machineNumber,msoPhone,ticketNumber,statusId,statusTag,pageable))
-                issueDetailList.add(getIssueDetailObject(ih,user));
-            HashMap<String, Object> data = new HashMap<>();
-            data.put("tickets",issueDetailList);
-            data.put("pageIndex",pageIndex);
-            data.put("totalPages",totalPages);
-            data.put("pageSize",pageSize);
-            data.put("recordCount",recordCount);
-            data.put("statusList",reStatus.getStatusWiseTicketSummary(statusTag));
-            data.put("statusTagList",reStatus.getStatusTagWiseTicketSummary());
-            return new Response(true,"Success",data);
+            LocalDateTime startD = LocalDateTime.parse(startDate+"T00:00:00");
+            LocalDateTime endD = LocalDateTime.parse(endDate+"T00:00:00").plus(1,ChronoUnit.DAYS);
+            int pageSize=10;
+            int recordCount = reIssueHeader.countAllByFilter(shopCode,machineNumber,msoPhone,
+                    ticketNumber,statusId,statusTag,startD,endD,
+                    creationToResolveMinStart,creationToResolveMinEnd,creationToResolveWithNull,
+                    creationToClosingMinStart,creationToClosingMinEnd,creationToClosingWithNull);
+            int totalPages = recordCount%pageSize ==0 ? recordCount/pageSize : recordCount/pageSize+1 ;
+            int pageIndex = page<1 || page>totalPages ? 1 : page ;
+
+            ArrayList<Sort.Order> orders = new ArrayList();
+            if(sortBy.length()==0 && sortDir.length()==0){
+                orders.add(new Sort.Order(Sort.Direction.ASC, sortByColumns.get(0)));
+                orders.add(new Sort.Order(Sort.Direction.ASC, sortByColumns.get(1)));
+            }
+            else {
+                orders.add(new Sort.Order(Sort.Direction.DESC, sortByColumns.get(2)));
+            }
+
+            Pageable pageable = PageRequest.of( pageIndex-1 , pageSize,
+                    Sort.by(orders));
+//            Sort.Direction.fromString(sortDirections.get(0)), sortByColumns.get(0),sortByColumns.get(1)
+            try {
+                User user = seCommon.getUser(request);
+                if(user==null) throw new Exception("Unauthorized User");
+                ArrayList<IssueDetail> issueDetailList = new ArrayList<>();
+                for (IssueHeader ih:reIssueHeader.getAllByFilter(shopCode,machineNumber,msoPhone,ticketNumber,
+                        statusId,statusTag,startD,endD,creationToResolveMinStart,creationToResolveMinEnd,creationToResolveWithNull,
+                        creationToClosingMinStart,creationToClosingMinEnd,creationToClosingWithNull,pageable))
+                    issueDetailList.add(getIssueDetailObject(ih,user));
+                HashMap<String, Object> data = new HashMap<>();
+                data.put("tickets",issueDetailList);
+                data.put("pageIndex",pageIndex);
+                data.put("totalPages",totalPages);
+                data.put("pageSize",pageSize);
+                data.put("recordCount",recordCount);
+                data.put("statusList",reStatus.getStatusWiseTicketSummary(statusTag));
+                data.put("statusTagList",reStatus.getStatusTagWiseTicketSummary());
+                return new Response(true,"Success",data);
+            }catch (Exception e){
+                e.printStackTrace();
+                throw e;
+            }
         }catch (Exception e){
-            e.printStackTrace();
             logger.info(e.getMessage());
             return new Response(false,e.getMessage());
         }
+
     }
 
     public Response getWebDashboardAnalytics(){
@@ -208,19 +234,8 @@ public class SeIssue {
     }
 
     public IssueDetail getIssueDetailObject(IssueHeader issueHeader,User user){
-        Shop shop = reShop.findById(issueHeader.getShopUser().getRemoteId()).orElse(null);
-        if(shop==null) shop = new Shop();
-        ResponsibleOfficer mso = reResponsibleOfficer.findById(issueHeader.getCurrentMsoUser().getRemoteId()).orElse(null);
-        if(mso==null) mso = new ResponsibleOfficer();
-        IssueDetail issueDetail = new IssueDetail(
-                issueHeader.getId(), issueHeader.getRequestToken(), issueHeader.getIssueType().getName(),
-                issueHeader.getShopName(), shop.getProprietorName(), issueHeader.getShopOwnerPhone(), issueHeader.getShopUser().getUsername(),
-                issueHeader.getShopAddress(), shop.getDivision(), shop.getRegion(), shop.getTerritory(),
-                issueHeader.getMachineNumber(),issueHeader.getMachineModel(), issueHeader.getMachineBrand(),
-                mso.getName(),mso.getPhone(), issueHeader.getCreationTime(),issueHeader.getCurrentStatus(),
-                reStatus.getNextStatusForCurrentStatusAndUser(issueHeader.getCurrentStatus().getId(),
-                        user.getId()),null,issueHeader.getResponseTime(),issueHeader.getResolutionTime(),
-                issueHeader.getClosingTime(),null,null,null);
+        List<Status> nextStatus = reStatus.getNextStatusForCurrentStatusAndUser(
+                issueHeader.getCurrentStatus().getId(), user.getId());
         List<IssueHistory> issueHistoryList = new ArrayList<>();
         int seq=1;
         for(StatusTrack track:issueHeader.getStatusTracks()){
@@ -251,12 +266,7 @@ public class SeIssue {
                 issueHistoryList.add(issueHistory);
             }catch (Exception e){e.printStackTrace();}
         }
-        issueDetail.setIssueHistory(issueHistoryList);
-
-        issueDetail.setCreationToResponseTimeMin(getTimeDiff(issueDetail.getIssueDate(),issueDetail.getResponseTime()));
-        issueDetail.setResponseToResolutionTimeMin(getTimeDiff(issueDetail.getResponseTime(),issueDetail.getResolutionTime()));
-        issueDetail.setResolutionToClosingTimeMin(getTimeDiff(issueDetail.getResolutionTime(),issueDetail.getClosingTime()));
-        return issueDetail;
+        return new IssueDetail(issueHeader,nextStatus,issueHistoryList);
     }
 
     public Response setNextStatus(HttpServletRequest request, IssueNextStatus nextStatus){
@@ -316,13 +326,24 @@ public class SeIssue {
             //setting response,resolution,closing time
             try {
                 if(statusTrack.getIssueHeader().getStatusTracks().size()==2){
-                    issueHeader.setResponseTime(LocalDateTime.now());
+                    try {
+                        issueHeader.setResponseTime(LocalDateTime.now());
+                        issueHeader.setCreationToResponseTimeMin(issueHeader.getCreationTime().until(issueHeader.getResponseTime(),ChronoUnit.MINUTES));
+                    }catch (Exception e){e.printStackTrace();}
                 }
                 if(statusTrack.getStatus().getStatusTag().equals(StatusTag.PRE_END)){
                     issueHeader.setResolutionTime(LocalDateTime.now());
+                    try {
+                        issueHeader.setResponseToResolutionTimeMin(issueHeader.getResponseTime().until(issueHeader.getResolutionTime(),ChronoUnit.MINUTES));
+                        issueHeader.setCreationToResolutionTimeMin(issueHeader.getCreationTime().until(issueHeader.getResolutionTime(),ChronoUnit.MINUTES));
+                    }catch (Exception e){e.printStackTrace();}
                 }
                 if(statusTrack.getStatus().getStatusTag().equals(StatusTag.END)){
                     issueHeader.setClosingTime(LocalDateTime.now());
+                    try {
+                        issueHeader.setResolutionToClosingTimeMin(issueHeader.getResolutionTime().until(issueHeader.getClosingTime(),ChronoUnit.MINUTES));
+                        issueHeader.setCreationToClosingTimeMin(issueHeader.getCreationTime().until(issueHeader.getClosingTime(),ChronoUnit.MINUTES));
+                    }catch (Exception e){e.printStackTrace();}
                 }
                 reIssueHeader.save(issueHeader);
             }catch (Exception e){e.printStackTrace();}
@@ -346,6 +367,13 @@ public class SeIssue {
             if(endStatus==null) throw new Exception("End Status Not Found");
             issueHeader.setCurrentStatus(endStatus);
             issueHeader.setClosingTime(LocalDateTime.now());
+
+            try {
+                issueHeader.setCreationToClosingTimeMin(issueHeader.getCreationTime().until(issueHeader.getClosingTime(),ChronoUnit.MINUTES));
+            }catch (Exception e){e.printStackTrace();}
+            try {
+                issueHeader.setResolutionToClosingTimeMin(issueHeader.getResolutionTime().until(issueHeader.getClosingTime(),ChronoUnit.MINUTES));
+            }catch (Exception e){e.printStackTrace();}
 
             StatusTrack statusTrack = new StatusTrack(issueHeader,endStatus,issueHeader.getCurrentMsoUser(),
                     issueHeader.getCurrentMsoPhone() ,issueHeader.getCurrentMsoLocation(), user);

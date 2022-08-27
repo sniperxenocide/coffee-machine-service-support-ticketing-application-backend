@@ -11,18 +11,29 @@ import java.util.List;
 public class Shop {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @Column(name = "shop_name")
     private String shopName;
+
     @Column(name = "shop_code")
     private String shopCode;
+
     @Column(name = "proprietor_name")
     private String proprietorName;
+
     @Column(name = "proprietor_phone")
     private String proprietorPhone;
+
     private String address;
     private String division;
     private String region;
     private String territory;
+
+    @Column(name = "distributor_name")
+    private String distributorName;
+
+    @Column(name = "distributor_oracle_code")
+    private String distributorOracleCode;
 
 
     @OneToMany(mappedBy = "shop", orphanRemoval = true,fetch = FetchType.EAGER)

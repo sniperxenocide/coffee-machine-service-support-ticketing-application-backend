@@ -43,15 +43,36 @@ public class IssueHeader {
     @Column(name = "shop_address")
     private String shopAddress;
 
+    @Column(name = "division",length = 500)
+    private String division;
+
+    @Column(name = "region",length = 500)
+    private String region;
+
+    @Column(name = "territory",length = 500)
+    private String territory;
+
+    @Column(name = "distributor_name",length = 1000)
+    private String distributorName;
+
+    @Column(name = "distributor_oracle_code",length = 50)
+    private String distributorOracleCode;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "mso_user_id", nullable = false)
     private User msoUser;
+
+    @Column(name = "mso_name")
+    private String msoName;
 
     @Column(name = "mso_phone", nullable = false, length = 45)
     private String msoPhone;
 
     @Column(name = "mso_location", nullable = false)
     private String msoLocation;
+
+    @Column(name = "current_mso_name")
+    private String currentMsoName;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "current_mso_user_id", nullable = false)
@@ -103,6 +124,21 @@ public class IssueHeader {
     @Column(name = "closing_time")
     private LocalDateTime closingTime;
 
+    @Column(name = "creation_to_response_time_min")
+    private Long creationToResponseTimeMin;
+
+    @Column(name = "response_to_resolution_time_min")
+    private Long responseToResolutionTimeMin;
+
+    @Column(name = "resolution_to_closing_time_min")
+    private Long resolutionToClosingTimeMin;
+
+    @Column(name = "creation_to_resolution_time_min")
+    private Long creationToResolutionTimeMin;
+
+    @Column(name = "creation_to_closing_time_min")
+    private Long creationToClosingTimeMin;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "issue_type_id",nullable = false)
     private IssueType issueType;
@@ -115,11 +151,18 @@ public class IssueHeader {
         this.shopOwnerName = shop.getProprietorName();
         this.shopOwnerPhone = shop.getProprietorPhone();
         this.shopAddress = shop.getAddress();
+        this.division = shop.getDivision();
+        this.region = shop.getRegion();
+        this.territory = shop.getTerritory();
+        this.distributorName = shop.getDistributorName();
+        this.distributorOracleCode = shop.getDistributorOracleCode();
 
         this.msoUser = msoUser;
+        this.msoName = mso.getName();
         this.msoPhone = mso.getPhone();
         this.msoLocation = msoUser.getLocation();
         this.currentMsoUser = msoUser;
+        this.currentMsoName = mso.getName();
         this.currentMsoPhone = mso.getPhone();
         this.currentMsoLocation = msoUser.getLocation();
 

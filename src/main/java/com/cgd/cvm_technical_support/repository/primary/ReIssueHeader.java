@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import com.cgd.cvm_technical_support.tmp.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,10 +20,23 @@ public interface ReIssueHeader extends JpaRepository<IssueHeader, Long> {
             "i.msoPhone like concat('%',?3,'%') and " +
             "i.requestToken like concat('%',?4,'%') and " +
             "concat(i.currentStatus.id,'') like ?5 and " +
-            "concat(i.currentStatus.statusTag,'') like ?6 " )
+            "concat(i.currentStatus.statusTag,'') like ?6 and " +
+            "i.creationTime between ?7 and ?8 and " +
+            " ( " +
+            "   (i.creationToResolutionTimeMin between ?9 and ?10) or " +
+            "   (i.creationToResolutionTimeMin is null and ?11 = 'true' ) " +
+            " ) and " +
+            " ( " +
+            "   (i.creationToClosingTimeMin between ?12 and ?13) or " +
+            "   (i.creationToClosingTimeMin is null and ?14 = 'true') " +
+            " ) "
+    )
     List<IssueHeader> getAllByFilter(String shopCode,String machineNumber,
                                      String msoPhone,String ticketNumber,String statusId,
-                                     String statusTag, Pageable pageable);
+                                     String statusTag,LocalDateTime startDate, LocalDateTime endDate,
+                                     Long crToRslMinSt,Long crToRslMinEn,String crToRslWithNull,
+                                     Long crToClMinSt,Long crToClMinEn,String crToClWithNull,
+                                     Pageable pageable);
 
     @Query(value = "select count(i) from IssueHeader i where " +
             "i.shopUser.username like concat('%',?1,'%') and " +
@@ -30,9 +44,18 @@ public interface ReIssueHeader extends JpaRepository<IssueHeader, Long> {
             "i.msoPhone like concat('%',?3,'%') and " +
             "i.requestToken like concat('%',?4,'%') and " +
             "concat(i.currentStatus.id,'') like ?5 and " +
-            "concat(i.currentStatus.statusTag,'') like ?6 ")
-    int countAllByFilter(String shopCode,String machineNumber,
-                         String msoPhone,String ticketNumber,String statusId,String statusTag);
+            "concat(i.currentStatus.statusTag,'') like ?6 and " +
+            "i.creationTime between ?7 and ?8 and " +
+            " ((i.creationToResolutionTimeMin between ?9 and ?10) or " +
+            " (i.creationToResolutionTimeMin is null and ?11 = 'true' )) and "+
+            " ((i.creationToClosingTimeMin between ?12 and ?13) or " +
+            " (i.creationToClosingTimeMin is null and ?14 = 'true' )) "
+    )
+    int countAllByFilter(String shopCode, String machineNumber,
+                         String msoPhone, String ticketNumber, String statusId,
+                         String statusTag, LocalDateTime startDate, LocalDateTime endDate,
+                         Long crToRslMinSt,Long crToRslMinEn,String crToRslWithNull,
+                         Long crToClMinSt,Long crToClMinEn,String crToClWithNull);
 
     int countByRequestTokenLike(String requestToken);
 

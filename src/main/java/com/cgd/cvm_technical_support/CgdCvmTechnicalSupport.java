@@ -13,6 +13,8 @@ import org.springframework.web.client.RestTemplate;
 @SpringBootApplication
 public class CgdCvmTechnicalSupport {
 
+    public static final String MIN_LONG_INF = "-9223372036854775808";
+    public static final String MAX_LONG_INF = "9223372036854775807";
     public static final Logger LOGGER = LoggerFactory.getLogger(CgdCvmTechnicalSupport.class);
 
     public static void main(String[] args) {
