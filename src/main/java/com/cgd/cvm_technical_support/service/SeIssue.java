@@ -67,15 +67,18 @@ public class SeIssue {
                                  Long creationToClosingMinStart,Long creationToClosingMinEnd,
                                  String creationToClosingWithNull){
         try {
+            logger.info("Get All Issue Method Start");
             LocalDateTime startD = LocalDateTime.parse(startDate+"T00:00:00");
             LocalDateTime endD = LocalDateTime.parse(endDate+"T00:00:00").plus(1,ChronoUnit.DAYS);
             int pageSize=10;
-            int recordCount = reIssueHeader.countAllByFilter(shopCode,machineNumber,msoPhone,
+            int recordCount = reIssueHeader.getAllByFilter(shopCode,machineNumber,msoPhone,
                     ticketNumber,statusId,statusTag,startD,endD,
                     creationToResolveMinStart,creationToResolveMinEnd,creationToResolveWithNull,
-                    creationToClosingMinStart,creationToClosingMinEnd,creationToClosingWithNull);
+                    creationToClosingMinStart,creationToClosingMinEnd,creationToClosingWithNull,null).size();
             int totalPages = recordCount%pageSize ==0 ? recordCount/pageSize : recordCount/pageSize+1 ;
             int pageIndex = page<1 || page>totalPages ? 1 : page ;
+
+            logger.info("Get All Issue Record Count:"+recordCount);
 
             ArrayList<Sort.Order> orders = new ArrayList();
             if(sortBy.length()==0 && sortDir.length()==0){
@@ -92,19 +95,19 @@ public class SeIssue {
             try {
                 User user = seCommon.getUser(request);
                 if(user==null) throw new Exception("Unauthorized User");
-                ArrayList<IssueDetail> issueDetailList = new ArrayList<>();
-                for (IssueHeader ih:reIssueHeader.getAllByFilter(shopCode,machineNumber,msoPhone,ticketNumber,
+                ArrayList<IssueStatus> issueStatusList = (ArrayList<IssueStatus>) reIssueHeader.getAllByFilter(shopCode,machineNumber,msoPhone,ticketNumber,
                         statusId,statusTag,startD,endD,creationToResolveMinStart,creationToResolveMinEnd,creationToResolveWithNull,
-                        creationToClosingMinStart,creationToClosingMinEnd,creationToClosingWithNull,pageable))
-                    issueDetailList.add(getIssueDetailObject(ih,user));
+                        creationToClosingMinStart,creationToClosingMinEnd,creationToClosingWithNull,pageable);
+                logger.info("Get All Issue Record Fetch Query Complete");
                 HashMap<String, Object> data = new HashMap<>();
-                data.put("tickets",issueDetailList);
+                data.put("tickets",issueStatusList);
                 data.put("pageIndex",pageIndex);
                 data.put("totalPages",totalPages);
                 data.put("pageSize",pageSize);
                 data.put("recordCount",recordCount);
                 data.put("statusList",reStatus.getStatusWiseTicketSummary(statusTag));
                 data.put("statusTagList",reStatus.getStatusTagWiseTicketSummary());
+                logger.info("Get All Issue Loop Complete & Method End");
                 return new Response(true,"Success",data);
             }catch (Exception e){
                 e.printStackTrace();
@@ -224,13 +227,6 @@ public class SeIssue {
             logger.info(e.getMessage());
             return new Response(false,e.getMessage());
         }
-    }
-
-    Long getTimeDiff(LocalDateTime start,LocalDateTime end){
-        LocalDateTime s=start,e=end;
-        if(s==null) return null;
-        if(e==null) e=LocalDateTime.now();
-        return s.until(e, ChronoUnit.MINUTES);
     }
 
     public IssueDetail getIssueDetailObject(IssueHeader issueHeader,User user){
