@@ -195,6 +195,7 @@ public class SeIssue {
         }
     }
 
+    //Only in Mobile App
     public Response getAllActiveIssueStatus(HttpServletRequest request){
         User user = seCommon.getUser(request);
         ArrayList<Long> allowedIssueTypes = new ArrayList<>();
@@ -205,15 +206,16 @@ public class SeIssue {
         ArrayList<IssueStatus> activeIssues;
         if(seCommon.checkUserRole(user,"Customer")){
             activeIssues = (ArrayList<IssueStatus>) reIssueHeader
-                    .getUserRoleWiseAllActiveIssueStatus(user.getId(),null,allowedIssueTypes);
+                    .getActiveIssuesForShopUser(user.getId(),allowedIssueTypes);
         }
         else if(seCommon.checkUserRole(user,"MSO")){
             activeIssues = (ArrayList<IssueStatus>) reIssueHeader
-                    .getUserRoleWiseAllActiveIssueStatus(null,user.getId(),allowedIssueTypes);
+                    .getActiveIssuesForMsoUser(user.getId(),allowedIssueTypes);
         }
         else return new Response(false,"Unauthorized");
         return new Response(true,"Success",activeIssues);
     }
+    //Only in Mobile App
 
     public Response getIssueDetail(HttpServletRequest request,Long id){
         try {

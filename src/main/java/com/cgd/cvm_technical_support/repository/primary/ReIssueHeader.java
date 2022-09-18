@@ -51,13 +51,19 @@ public interface ReIssueHeader extends JpaRepository<IssueHeader, Long> {
 
     @Query(
             value = " select new com.cgd.cvm_technical_support.tmp.IssueStatus(i) " +
-            " from IssueHeader i where " +
-            " ((?1 is null and ?2 is not null) or (?1 is not null and ?2 is null)) " +
-            " and (?1 is null or i.shopUser.id=?1) and (?2 is null or i.msoUser.id=?2) " +
-            " and i.currentStatus.statusTag <> com.cgd.cvm_technical_support.enums.StatusTag.END " +
-            " and i.issueType.id in ?3 "
+                    " from IssueHeader i where i.shopUser.id=?1 " +
+                    " and i.currentStatus.statusTag <> com.cgd.cvm_technical_support.enums.StatusTag.END " +
+                    " and i.issueType.id in ?2 "
     )
-    List<IssueStatus> getUserRoleWiseAllActiveIssueStatus(Long shopUserId, Long msoUserId, ArrayList<Long> issueTypes);
+    List<IssueStatus> getActiveIssuesForShopUser(Long shopUserId,ArrayList<Long> issueTypes);
+
+    @Query(
+            value = " select new com.cgd.cvm_technical_support.tmp.IssueStatus(i) " +
+                    " from IssueHeader i where i.msoUser.id=?1 " +
+                    " and concat(i.currentStatus.statusTag,'') not in ('PRE_END','END') " +
+                    " and i.issueType.id in ?2 "
+    )
+    List<IssueStatus> getActiveIssuesForMsoUser(Long msoUserId,ArrayList<Long> issueTypes);
 
 
 }
