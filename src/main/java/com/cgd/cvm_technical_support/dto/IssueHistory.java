@@ -1,4 +1,4 @@
-package com.cgd.cvm_technical_support.tmp;
+package com.cgd.cvm_technical_support.dto;
 
 import com.cgd.cvm_technical_support.model.primary.StatusWiseData;
 import lombok.*;

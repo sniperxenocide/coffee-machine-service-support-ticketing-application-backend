@@ -1,9 +1,9 @@
 package com.cgd.cvm_technical_support.repository.primary;
 
 import com.cgd.cvm_technical_support.model.primary.IssueHeader;
-import com.cgd.cvm_technical_support.tmp.MachineWiseRootCauseCountReport;
-import com.cgd.cvm_technical_support.tmp.MachineWiseTicketCountReport;
-import com.cgd.cvm_technical_support.tmp.TicketCountReport;
+import com.cgd.cvm_technical_support.dto.MachineWiseRootCauseCountReport;
+import com.cgd.cvm_technical_support.dto.MachineWiseTicketCountReport;
+import com.cgd.cvm_technical_support.dto.TicketCountReport;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -15,7 +15,7 @@ import java.util.List;
 @Repository
 public interface ReReport extends JpaRepository<IssueHeader,Long> {
 
-    @Query(value = "select new com.cgd.cvm_technical_support.tmp.TicketCountReport" +
+    @Query(value = "select new com.cgd.cvm_technical_support.dto.TicketCountReport" +
             "(i.division,i.region,i.territory,i.currentMsoName,i.currentMsoPhone,i.machineBrand,i.machineModel, " +
             "t.name,s.tagDescription,s.name,swd.fieldData,count(i.id)) " +
             "from IssueHeader i " +
@@ -28,7 +28,7 @@ public interface ReReport extends JpaRepository<IssueHeader,Long> {
             "t.name,s.tagDescription,s.name,swd.fieldData ")
     List<TicketCountReport> ticketCountReport(LocalDateTime startDate, LocalDateTime endDate);
 
-    @Query(value = "select new com.cgd.cvm_technical_support.tmp.MachineWiseRootCauseCountReport " +
+    @Query(value = "select new com.cgd.cvm_technical_support.dto.MachineWiseRootCauseCountReport " +
             "(i.division,i.region,i.territory,i.machineBrand,i.machineModel,i.machineNumber,swd.fieldData,count(i.id)) " +
             "from IssueHeader i left join StatusTrack st on i.id = st.issueHeader.id " +
             "left join StatusWiseData swd on st.id = swd.statusTrack.id " +
@@ -44,7 +44,7 @@ public interface ReReport extends JpaRepository<IssueHeader,Long> {
              String region, String territory,String rootCause,LocalDateTime startDate,LocalDateTime endDate,
              Long countStart,Long countEnd,Pageable pageable);
 
-    @Query(value = "select new com.cgd.cvm_technical_support.tmp.MachineWiseTicketCountReport " +
+    @Query(value = "select new com.cgd.cvm_technical_support.dto.MachineWiseTicketCountReport " +
             "(i.division,i.region,i.territory,i.machineBrand,i.machineModel,i.machineNumber,count(i.id)) " +
             "from IssueHeader i where i.creationTime between ?7 and ?8 " +
             "and i.machineNumber like concat('%',?1,'%') and i.machineModel like concat('%',?2,'%') " +

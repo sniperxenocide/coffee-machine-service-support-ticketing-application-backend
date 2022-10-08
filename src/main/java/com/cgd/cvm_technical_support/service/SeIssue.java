@@ -11,7 +11,8 @@ import com.cgd.cvm_technical_support.repository.master.ReMachine;
 import com.cgd.cvm_technical_support.repository.master.ReResponsibleOfficer;
 import com.cgd.cvm_technical_support.repository.master.ReShop;
 import com.cgd.cvm_technical_support.repository.primary.*;
-import com.cgd.cvm_technical_support.tmp.*;
+import com.cgd.cvm_technical_support.dto.*;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,11 +22,10 @@ import org.springframework.stereotype.Service;
 import javax.servlet.http.HttpServletRequest;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-@Service
+@Service @Slf4j
 public class SeIssue {
     private final SeCommon seCommon;
     private final ReShop reShop;
@@ -129,6 +129,7 @@ public class SeIssue {
 
     public Response createNewIssue(HttpServletRequest request,String shopCode,Long machineId,Long issueTypeId){
         try {
+            log.info("Creating new Ticket...");
             User user = seCommon.getUser(request);
             if(user==null) throw new Exception("Unauthorized Request");
             User shopUser = null,msoUser = null;
@@ -188,6 +189,7 @@ public class SeIssue {
             StatusTrack statusTrack = new StatusTrack(issueHeader,initStatus,msoUser, mso.getPhone(), msoUser.getLocation(),user);
             reIssueHeader.save(issueHeader);
             reStatusTrack.save(statusTrack);
+            log.info("Ticket Created Successfully. Token: {}",reqToken);
             return new Response(true,"Issue Created Successfully.Token: "+reqToken);
         }catch (Exception e){
             logger.info(e.getMessage());

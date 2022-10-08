@@ -5,7 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-import com.cgd.cvm_technical_support.tmp.*;
+import com.cgd.cvm_technical_support.dto.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -14,7 +14,7 @@ import java.util.List;
 @Repository
 public interface ReIssueHeader extends JpaRepository<IssueHeader, Long> {
 
-    @Query(value = "select new com.cgd.cvm_technical_support.tmp.IssueStatus(i) " +
+    @Query(value = "select new com.cgd.cvm_technical_support.dto.IssueStatus(i) " +
             "from IssueHeader i where " +
             "i.shopUser.username like concat('%',?1,'%') and " +
             "i.machineNumber like concat('%',?2,'%') and " +
@@ -50,7 +50,7 @@ public interface ReIssueHeader extends JpaRepository<IssueHeader, Long> {
     List<IssueHeader> checkActiveIssueForShop(Long shopId, Long machineId);
 
     @Query(
-            value = " select new com.cgd.cvm_technical_support.tmp.IssueStatus(i) " +
+            value = " select new com.cgd.cvm_technical_support.dto.IssueStatus(i) " +
                     " from IssueHeader i where i.shopUser.id=?1 " +
                     " and i.currentStatus.statusTag <> com.cgd.cvm_technical_support.enums.StatusTag.END " +
                     " and i.issueType.id in ?2 "
@@ -58,7 +58,7 @@ public interface ReIssueHeader extends JpaRepository<IssueHeader, Long> {
     List<IssueStatus> getActiveIssuesForShopUser(Long shopUserId,ArrayList<Long> issueTypes);
 
     @Query(
-            value = " select new com.cgd.cvm_technical_support.tmp.IssueStatus(i) " +
+            value = " select new com.cgd.cvm_technical_support.dto.IssueStatus(i) " +
                     " from IssueHeader i where i.msoUser.id=?1 " +
                     " and concat(i.currentStatus.statusTag,'') not in ('PRE_END','END') " +
                     " and i.issueType.id in ?2 "

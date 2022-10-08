@@ -1,11 +1,9 @@
 package com.cgd.cvm_technical_support.controller.rest;
-import com.cgd.cvm_technical_support.CgdCvmTechnicalSupport;
 import com.cgd.cvm_technical_support.service.SeIssue;
-import com.cgd.cvm_technical_support.tmp.IssueNextStatus;
+import com.cgd.cvm_technical_support.dto.IssueNextStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
-import java.time.LocalDateTime;
 
 @RestController
 public class CnIssue {

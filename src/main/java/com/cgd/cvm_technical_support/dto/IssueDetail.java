@@ -1,10 +1,9 @@
-package com.cgd.cvm_technical_support.tmp;
+package com.cgd.cvm_technical_support.dto;
 
 import com.cgd.cvm_technical_support.model.primary.IssueHeader;
 import com.cgd.cvm_technical_support.model.primary.Status;
 import lombok.*;
 
-import javax.persistence.Column;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;

@@ -2,7 +2,7 @@ package com.cgd.cvm_technical_support.service;
 
 import com.cgd.cvm_technical_support.CgdCvmTechnicalSupport;
 import com.cgd.cvm_technical_support.repository.primary.ReReport;
-import com.cgd.cvm_technical_support.tmp.Response;
+import com.cgd.cvm_technical_support.dto.Response;
 import org.slf4j.Logger;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

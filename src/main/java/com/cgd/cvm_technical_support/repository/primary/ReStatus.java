@@ -1,8 +1,8 @@
 package com.cgd.cvm_technical_support.repository.primary;
 
 import com.cgd.cvm_technical_support.model.primary.Status;
-import com.cgd.cvm_technical_support.tmp.StatusTagWiseSummary;
-import com.cgd.cvm_technical_support.tmp.StatusWiseSummary;
+import com.cgd.cvm_technical_support.dto.StatusTagWiseSummary;
+import com.cgd.cvm_technical_support.dto.StatusWiseSummary;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -32,14 +32,14 @@ public interface ReStatus extends JpaRepository<Status, Long> {
             "s.statusTag=com.cgd.cvm_technical_support.enums.StatusTag.END ")
     Optional<Status> getEndStatus();
 
-    @Query(value = "select new com.cgd.cvm_technical_support.tmp.StatusWiseSummary " +
+    @Query(value = "select new com.cgd.cvm_technical_support.dto.StatusWiseSummary " +
             "(s.id,s.name,s.statusTag,s.tagDescription,count(i.id)) " +
             "from Status s left join IssueHeader i on s.id=i.currentStatus.id " +
             "where concat(s.statusTag,'') like ?1 " +
             "group by s.id,s.name,s.statusTag,s.tagDescription order by s.statusOrder ") //s.id,s.statusTag
     List<StatusWiseSummary> getStatusWiseTicketSummary(String statusTag);
 
-    @Query(value = "select new com.cgd.cvm_technical_support.tmp.StatusTagWiseSummary " +
+    @Query(value = "select new com.cgd.cvm_technical_support.dto.StatusTagWiseSummary " +
             "(s.statusTag,s.tagDescription,count(i.id)) " +
             "from Status s left join IssueHeader i on s.id=i.currentStatus.id " +
             "group by s.statusTag,s.tagDescription ")

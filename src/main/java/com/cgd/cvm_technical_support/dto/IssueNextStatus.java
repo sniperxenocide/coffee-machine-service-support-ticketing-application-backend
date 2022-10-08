@@ -1,4 +1,4 @@
-package com.cgd.cvm_technical_support.tmp;
+package com.cgd.cvm_technical_support.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

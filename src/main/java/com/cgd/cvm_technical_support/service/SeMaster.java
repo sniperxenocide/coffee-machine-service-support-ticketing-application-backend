@@ -1,5 +1,7 @@
 package com.cgd.cvm_technical_support.service;
 
+import com.cgd.cvm_technical_support.dto.master.MachineDto;
+import com.cgd.cvm_technical_support.dto.master.ShopDto;
 import com.cgd.cvm_technical_support.model.master.Contract;
 import com.cgd.cvm_technical_support.model.master.Machine;
 import com.cgd.cvm_technical_support.model.master.Shop;
@@ -7,7 +9,7 @@ import com.cgd.cvm_technical_support.model.primary.Role;
 import com.cgd.cvm_technical_support.model.primary.User;
 import com.cgd.cvm_technical_support.repository.master.ReShop;
 import com.cgd.cvm_technical_support.repository.primary.*;
-import com.cgd.cvm_technical_support.tmp.Response;
+import com.cgd.cvm_technical_support.dto.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -55,8 +58,8 @@ public class SeMaster {
                     Shop shop = reShop.findByShopCode(shopCode).orElse(null);
                     if(shop==null) return new Response(false,"Invalid Shop Code");
                     if(shop.getResponsibleOfficer().getPhone().equals(user.getUsername()) &&
-                            Objects.equals(shop.getResponsibleOfficer().getId(), user.getRemoteId())){
-                        new Response(true,"Success",getMachinesByShop(shop));
+                            (Objects.equals(shop.getResponsibleOfficer().getId(), user.getRemoteId()))){
+                        return new Response(true,"Success",getMachinesByShop(shop));
                     }
                     return new Response(false,"MSO not Assigned for this Shop");
                 }
@@ -66,40 +69,25 @@ public class SeMaster {
     }
 
     public Object getMachinesByShop(Shop shop){
-        ArrayList<HashMap<String, Object>> machines = new ArrayList<>();
-        for (Contract c : shop.getContracts()) {
-            Machine m = c.getMachine();
-            HashMap<String, Object> o = new HashMap<>();
-            o.put("id", m.getId());
-            o.put("machineNumber", m.getMachineNumber());
-            o.put("model",m.getModelNumber());
-            o.put("brand", m.getMachineBrand().getName());
-            machines.add(o);
-        }
-        return machines;
+        return shop.getContracts().stream()
+                .map(contract -> new MachineDto(contract.getMachine()))
+                .collect(Collectors.toList());
     }
 
     public Response getShops(HttpServletRequest request,String search){
         try {
+            log.info("Getting Shops from User.");
             User user = seCommon.getUser(request);
             if(user==null) throw  new Exception("Unauthorized User");
-            ArrayList<HashMap<String, Object>> shops = new ArrayList<>();
-            ArrayList<Shop> shopFromDb = new ArrayList<>();
+            ArrayList<ShopDto> shops = new ArrayList<>();
             if(seCommon.checkUserRole(user,"Customer")){
-                shopFromDb = (ArrayList<Shop>) reShop.findShopForCustomer(user.getRemoteId());
+                shops = (ArrayList<ShopDto>) reShop.findShopForCustomer(user.getRemoteId());
             }
             else if(seCommon.checkUserRole(user,"MSO")){
                 search = search.replace(" ","%");
-                shopFromDb = (ArrayList<Shop>) reShop.findAllShopsForMso(user.getRemoteId(),search);
+                shops = (ArrayList<ShopDto>) reShop.findAllShopsForMso(user.getRemoteId(),search);
             }
-            for(Shop s:shopFromDb){
-                HashMap<String, Object> o = new HashMap<>();
-                o.put("id",s.getId());o.put("shopCode",s.getShopCode());
-                o.put("name",s.getShopName());o.put("address",s.getAddress());
-                o.put("machines",getMachinesByShop(s));
-                shops.add(o);
-            }
-            log.info("Returning Data: {}",shops);
+            log.info("Returning {} Shop.",shops.size());
             return new Response(true,"Success",shops);
         }catch (Exception e){
             e.printStackTrace();

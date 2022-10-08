@@ -1,15 +1,18 @@
-package com.cgd.cvm_technical_support.tmp;
+package com.cgd.cvm_technical_support.dto;
 
 import lombok.*;
 
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @ToString
-public class MachineWiseRootCauseCountReport {
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
+public class MachineWiseTicketCountReport {
     private String division;
     private String region;
     private String territory;
     private String machineBrand;
     private String machineModel;
     private String machineNumber;
-    private String rootCause;
     private Long count;
 }
