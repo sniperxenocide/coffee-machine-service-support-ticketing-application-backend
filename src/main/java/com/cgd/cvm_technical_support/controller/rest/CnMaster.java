@@ -23,8 +23,9 @@ public class CnMaster {
     }
 
     @GetMapping("/api/v1/user/shops")
-    public ResponseEntity<Object> getShopList(HttpServletRequest request){
-        return ResponseEntity.ok(service.getShops(request));
+    public ResponseEntity<Object> getShopList(HttpServletRequest request,
+                                              @RequestParam(required = false,defaultValue = "") String search){
+        return ResponseEntity.ok(service.getShops(request,search));
     }
 
     @GetMapping("/api/v1/master/data-options")

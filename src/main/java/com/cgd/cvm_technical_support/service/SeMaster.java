@@ -8,6 +8,7 @@ import com.cgd.cvm_technical_support.model.primary.User;
 import com.cgd.cvm_technical_support.repository.master.ReShop;
 import com.cgd.cvm_technical_support.repository.primary.*;
 import com.cgd.cvm_technical_support.tmp.Response;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
 
+@Slf4j
 @Service
 public class SeMaster {
     private final SeCommon seCommon;
@@ -77,31 +79,33 @@ public class SeMaster {
         return machines;
     }
 
-    public Response getShops(HttpServletRequest request){
-        User user = seCommon.getUser(request);
-        if(user==null) return new Response(false,"Unauthorized User");
-        ArrayList<HashMap<String, Object>> shops = new ArrayList<>();
-        ArrayList<Shop> shopFromDb = new ArrayList<>();
-        for (Role role: user.getRoles()) {
-            if (role.getName().equalsIgnoreCase("Customer")) {
+    public Response getShops(HttpServletRequest request,String search){
+        try {
+            User user = seCommon.getUser(request);
+            if(user==null) throw  new Exception("Unauthorized User");
+            ArrayList<HashMap<String, Object>> shops = new ArrayList<>();
+            ArrayList<Shop> shopFromDb = new ArrayList<>();
+            if(seCommon.checkUserRole(user,"Customer")){
                 shopFromDb = (ArrayList<Shop>) reShop.findShopForCustomer(user.getRemoteId());
-                break;
             }
-            else if(role.getName().equalsIgnoreCase("MSO")){
-                shopFromDb = (ArrayList<Shop>) reShop.findAllShopsForMso(user.getRemoteId());
-                break;
+            else if(seCommon.checkUserRole(user,"MSO")){
+                search = search.replace(" ","%");
+                shopFromDb = (ArrayList<Shop>) reShop.findAllShopsForMso(user.getRemoteId(),search);
             }
+            for(Shop s:shopFromDb){
+                HashMap<String, Object> o = new HashMap<>();
+                o.put("id",s.getId());o.put("shopCode",s.getShopCode());
+                o.put("name",s.getShopName());o.put("address",s.getAddress());
+                o.put("machines",getMachinesByShop(s));
+                shops.add(o);
+            }
+            log.info("Returning Data: {}",shops);
+            return new Response(true,"Success",shops);
+        }catch (Exception e){
+            e.printStackTrace();
+            log.error(e.getMessage());
+            return new Response(false,e.getMessage());
         }
-        for(Shop s:shopFromDb){
-            HashMap<String, Object> o = new HashMap<>();
-            o.put("id",s.getId());
-            o.put("shopCode",s.getShopCode());
-            o.put("name",s.getShopName());
-            o.put("address",s.getAddress());
-            o.put("machines",getMachinesByShop(s));
-            shops.add(o);
-        }
-        return new Response(true,"Success",shops);
     }
 
     public Response getDataFieldOptions(){
